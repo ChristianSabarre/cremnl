@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRE.MNL Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Form -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-form">
+            <div class="login-header">
+                <h1><i class="fas fa-receipt"></i> CRE.MNL Admin Dashboard</h1>
+                <p>Please sign in to continue</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">
+                        <i class="fas fa-user"></i> Username
+                    </label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+                <div id="loginError" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application (Hidden until login) -->
+    <div id="mainApp" class="container" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-receipt"></i> CRE.MNL Admin Dashboard</h1>
+                <button id="logoutBtn" class="btn btn-secondary logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+            <nav class="nav-tabs">
+                <button class="nav-btn active" data-tab="orders">
+                    <i class="fas fa-list"></i> Orders
+                </button>
+                <button class="nav-btn" data-tab="analytics">
+                    <i class="fas fa-chart-line"></i> Analytics
+                </button>
+                <button class="nav-btn" data-tab="customers">
+                    <i class="fas fa-users"></i> Customers
+                </button>
+                <button class="nav-btn" data-tab="items">
+                    <i class="fas fa-box"></i> Items
+                </button>
+            </nav>
+        </header>
+
+        <!-- Orders Tab -->
+        <div id="orders" class="tab-content active">
+            <div class="section-header">
+                <h2>Order Management</h2>
+                <button class="btn btn-primary" id="addOrderBtn">
+                    <i class="fas fa-plus"></i> Add New Order
+                </button>
+            </div>
+
+            <!-- Order Form Modal -->
+            <div id="orderModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Add New Order</h3>
+                        <span class="close">&times;</span>
+                    </div>
+                    <form id="orderForm">
+                        <div class="form-group">
+                            <label for="customerSelect">Customer:</label>
+                            <select id="customerSelect" required>
+                                <option value="">Select Customer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Items:</label>
+                            <div id="orderItems">
+                                <div class="order-item-row">
+                                    <select class="item-select" required>
+                                        <option value="">Select Item</option>
+                                    </select>
+                                    <input type="number" class="quantity-input" placeholder="Qty" min="1" value="1" required>
+                                    <button type="button" class="btn btn-danger remove-item">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="addOrderItemBtn">
+                                <i class="fas fa-plus"></i> Add Item
+                            </button>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Create Order</button>
+                            <button type="button" class="btn btn-secondary" id="cancelOrder">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Orders List -->
+            <div class="orders-container">
+                <div class="filter-section">
+                    <div class="filter-row">
+                        <select id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        
+                        <select id="dateFilter">
+                            <option value="">All Dates</option>
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="thisWeek">This Week</option>
+                            <option value="lastWeek">Last Week</option>
+                            <option value="thisMonth">This Month</option>
+                            <option value="lastMonth">Last Month</option>
+                            <option value="thisYear">This Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                        
+                        <select id="customerFilter">
+                            <option value="">All Customers</option>
+                        </select>
+                        
+                        <select id="itemFilter">
+                            <option value="">All Items</option>
+                        </select>
+                        
+                        <button class="btn btn-secondary" id="clearFiltersBtn">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </button>
+                    </div>
+                    
+                    <div id="customDateRange" class="custom-date-range" style="display: none;">
+                        <input type="date" id="startDate" placeholder="Start Date">
+                        <input type="date" id="endDate" placeholder="End Date">
+                        <button class="btn btn-primary" id="applyDateRangeBtn">Apply</button>
+                    </div>
+                </div>
+                <div id="ordersList" class="orders-list">
+                    <!-- Orders will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics" class="tab-content">
+            <div class="section-header">
+                <h2>Profit Analytics</h2>
+                <div class="date-range">
+                    <input type="date" id="startDate">
+                    <input type="date" id="endDate">
+                    <button class="btn btn-primary" id="updateAnalytics">
+                        <i class="fas fa-sync"></i> Update
+                    </button>
+                </div>
+            </div>
+
+            <div class="analytics-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalRevenue">₱0.00</h3>
+                        <p>Total Revenue</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalProfit">₱0.00</h3>
+                        <p>Total Profit</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalOrders">0</h3>
+                        <p>Total Orders</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="profitMargin">0%</h3>
+                        <p>Profit Margin</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-section">
+                <div class="chart-container">
+                    <h3>Daily Profit Trend</h3>
+                    <canvas id="profitChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Top Selling Items</h3>
+                    <canvas id="itemsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Customer Analytics Section -->
+            <div class="customer-analytics-section">
+                <h2>Customer Analytics</h2>
+                <div class="customer-stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalCustomers">0</h3>
+                            <p>Total Customers</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-redo"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="returningCustomers">0</h3>
+                            <p>Returning Customers</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="retentionRate">0%</h3>
+                            <p>Customer Retention Rate</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="avgOrderValue">₱0.00</h3>
+                            <p>Average Order Value</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="customer-charts-section">
+                    <div class="chart-container">
+                        <h3>Top Customers by Revenue</h3>
+                        <canvas id="topCustomersChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Customer Order Frequency</h3>
+                        <canvas id="orderFrequencyChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="customer-list-section">
+                    <h3>Customer Details</h3>
+                    <div id="customerAnalyticsList" class="customer-analytics-list">
+                        <!-- Customer analytics will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customers Tab -->
+        <div id="customers" class="tab-content">
+            <div class="section-header">
+                <h2>Customer Management</h2>
+                <button class="btn btn-primary" id="addCustomerBtn">
+                    <i class="fas fa-plus"></i> Add Customer
+                </button>
+            </div>
+            <div id="customersList" class="customers-list">
+                <!-- Customers will be populated here -->
+            </div>
+        </div>
+
+        <!-- Items Tab -->
+        <div id="items" class="tab-content">
+            <div class="section-header">
+                <h2>Item Management</h2>
+                <button class="btn btn-primary" id="addItemBtn">
+                    <i class="fas fa-plus"></i> Add Item
+                </button>
+            </div>
+            <div id="itemsList" class="items-list">
+                <!-- Items will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Process Payment</h3>
+                <span class="close">&times;</span>
+            </div>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label>Payment Method:</label>
+                    <select id="paymentMethod" required>
+                        <option value="">Select Method</option>
+                        <option value="cash">Cash</option>
+                        <option value="gcash">GCash</option>
+                        <option value="paymaya">PayMaya</option>
+                        <option value="other">Other E-wallet</option>
+                    </select>
+                </div>
+                <div class="form-group" id="refIdGroup" style="display: none;">
+                    <label for="refId">Reference ID:</label>
+                    <input type="text" id="refId" placeholder="Enter reference ID">
+                </div>
+                <div class="form-group">
+                    <label for="amountPaid">Amount Paid (₱):</label>
+                    <input type="number" id="amountPaid" step="0.01" required>
+                </div>
+                <div class="payment-summary">
+                    <p><strong>Amount Due: ₱<span id="amountDue">0.00</span></strong></p>
+                    <p>Balance: ₱<span id="balance">0.00</span></p>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Process Payment</button>
+                    <button type="button" class="btn btn-secondary" id="cancelPayment">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Item Modal -->
+    <div id="itemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Item</h3>
+                <span class="close">&times;</span>
+            </div>
+            <form id="itemForm">
+                <div class="form-group">
+                    <label for="itemName">Item Name:</label>
+                    <input type="text" id="itemName" required placeholder="e.g., Coffee, Latte, Muffin">
+                </div>
+                <div class="form-group">
+                    <label for="itemSize">Size:</label>
+                    <input type="text" id="itemSize" required placeholder="e.g., Small, Medium, Large">
+                </div>
+                <div class="form-group">
+                    <label for="costToMake">Cost to Make (₱):</label>
+                    <input type="number" id="costToMake" step="0.01" min="0" required placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="itemPrice">Selling Price (₱):</label>
+                    <input type="number" id="itemPrice" step="0.01" min="0" required placeholder="0.00">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Add Item</button>
+                    <button type="button" class="btn btn-secondary" id="cancelItem">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Customer Modal -->
+    <div id="customerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Customer</h3>
+                <span class="close">&times;</span>
+            </div>
+            <form id="customerForm">
+                <div class="form-group">
+                    <label for="customerName">Customer Name:</label>
+                    <input type="text" id="customerName" required placeholder="Enter customer name">
+                </div>
+                <div class="form-group">
+                    <label for="customerEmail">Email (Optional):</label>
+                    <input type="email" id="customerEmail" placeholder="customer@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="customerPhone">Phone (Optional):</label>
+                    <input type="tel" id="customerPhone" placeholder="+1 (555) 123-4567">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Add Customer</button>
+                    <button type="button" class="btn btn-secondary" id="cancelCustomer">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div id="receiptModal" class="modal">
+        <div class="modal-content receipt-content">
+            <div class="modal-header">
+                <h3>Receipt</h3>
+                <button class="btn btn-secondary" id="printReceipt">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
+            <div id="receiptContent" class="receipt">
+                <!-- Receipt content will be generated here -->
+            </div>
+        </div>
+    </div>
+    </div> <!-- End of mainApp container -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="config.js"></script>
+    <script src="appscript-client.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
