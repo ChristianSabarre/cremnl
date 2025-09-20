@@ -413,9 +413,14 @@
         <div class="modal-content receipt-content">
             <div class="modal-header">
                 <h3>Receipt</h3>
-                <button class="btn btn-secondary" id="printReceipt">
-                    <i class="fas fa-print"></i> Print
-                </button>
+                <div class="receipt-actions">
+                    <button class="btn btn-secondary" id="saveReceiptPhoto">
+                        <i class="fas fa-camera"></i> Save as Photo
+                    </button>
+                    <button class="btn btn-secondary" id="printReceipt">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                </div>
             </div>
             <div id="receiptContent" class="receipt">
                 <!-- Receipt content will be generated here -->

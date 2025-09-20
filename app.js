@@ -608,6 +608,18 @@ class ReceiptSystem {
             });
         }
 
+        // Save receipt as photo
+        const saveReceiptPhoto = document.getElementById('saveReceiptPhoto');
+        console.log('Save receipt photo button found:', saveReceiptPhoto);
+        if (saveReceiptPhoto) {
+            console.log('Adding event listener to save receipt photo button');
+            saveReceiptPhoto.addEventListener('click', () => {
+                this.saveReceiptAsPhoto();
+            });
+        } else {
+            console.error('Save receipt photo button not found!');
+        }
+
         // Modal close buttons
         document.querySelectorAll('.close').forEach(btn => {
             if (btn) {
@@ -1134,7 +1146,8 @@ class ReceiptSystem {
         if (order) {
             console.log('Order found:', order);
             const totalSales = order.items.reduce((sum, item) => sum + item.sales, 0);
-            document.getElementById('amountDue').textContent = totalSales.toFixed(2);
+            // Set amount due with peso symbol to match HTML structure
+            document.getElementById('amountDue').textContent = `₱${totalSales.toFixed(2)}`;
             document.getElementById('amountPaid').value = totalSales.toFixed(2);
             this.updateBalance();
             document.getElementById('paymentModal').style.display = 'block';
@@ -1165,7 +1178,7 @@ class ReceiptSystem {
         const amountDue = parseFloat(amountDueText.replace(/[₱$,]/g, '')) || 0;
         const amountPaid = parseFloat(document.getElementById('amountPaid').value) || 0;
         const balance = amountDue - amountPaid;
-        document.getElementById('balance').textContent = balance.toFixed(2);
+        document.getElementById('balance').textContent = `₱${balance.toFixed(2)}`;
     }
 
     async processPayment() {
@@ -1183,7 +1196,15 @@ class ReceiptSystem {
         const amountPaid = parseFloat(amountPaidInput);
         const amountDue = parseFloat(amountDueText.replace(/[₱$,]/g, '')); // Remove currency symbols and commas
 
+        // Debug logging for amount calculations
+        console.log('Payment processing debug:');
+        console.log('- amountPaidInput:', amountPaidInput);
+        console.log('- amountDueText:', amountDueText);
+        console.log('- parsed amountPaid:', amountPaid);
+        console.log('- parsed amountDue:', amountDue);
+
         if (isNaN(amountPaid) || isNaN(amountDue)) {
+            console.error('Invalid amount values detected:', { amountPaid, amountDue });
             alert('Invalid amount values. Please check the payment amounts.');
             return;
         }
@@ -1323,6 +1344,16 @@ class ReceiptSystem {
         `;
 
         document.getElementById('receiptModal').style.display = 'block';
+        
+        // Debug: Check if save button exists after modal is shown
+        setTimeout(() => {
+            const saveBtn = document.getElementById('saveReceiptPhoto');
+            console.log('Save button after modal shown:', saveBtn);
+            if (saveBtn) {
+                console.log('Save button is visible:', saveBtn.offsetWidth > 0 && saveBtn.offsetHeight > 0);
+                console.log('Save button computed style:', window.getComputedStyle(saveBtn).display);
+            }
+        }, 100);
     }
 
     printReceipt() {
@@ -1349,6 +1380,139 @@ class ReceiptSystem {
         `);
         printWindow.document.close();
         printWindow.print();
+    }
+
+    async saveReceiptAsPhoto() {
+        try {
+            const receiptContent = document.getElementById('receiptContent');
+            if (!receiptContent) {
+                alert('Receipt content not found.');
+                return;
+            }
+
+            // Show loading indicator
+            this.showLoading('Generating receipt image...');
+
+            // Use html2canvas library to convert receipt to image
+            if (typeof html2canvas === 'undefined') {
+                // Load html2canvas library if not already loaded
+                await this.loadHtml2Canvas();
+            }
+
+            // Create canvas from receipt content
+            const canvas = await html2canvas(receiptContent, {
+                backgroundColor: '#ffffff',
+                scale: 2, // Higher resolution
+                useCORS: true,
+                allowTaint: true,
+                width: receiptContent.offsetWidth,
+                height: receiptContent.offsetHeight
+            });
+
+            // Convert canvas to blob
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    this.hideLoading();
+                    alert('Failed to generate image. Please try again.');
+                    return;
+                }
+
+                // Check if device supports download attribute
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                
+                if (isMobile) {
+                    // For mobile devices, open image in new tab for saving
+                    const url = URL.createObjectURL(blob);
+                    const newWindow = window.open();
+                    newWindow.document.write(`
+                        <html>
+                            <head>
+                                <title>Receipt - Save Image</title>
+                                <style>
+                                    body { margin: 0; padding: 20px; text-align: center; background: #f5f5f5; }
+                                    img { max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; }
+                                    .instructions { margin-top: 20px; padding: 15px; background: white; border-radius: 8px; }
+                                    .instructions h3 { color: #5D4037; margin-bottom: 10px; }
+                                    .instructions p { color: #666; margin: 5px 0; }
+                                </style>
+                            </head>
+                            <body>
+                                <img src="${url}" alt="Receipt">
+                                <div class="instructions">
+                                    <h3>📱 How to Save on Mobile:</h3>
+                                    <p><strong>iPhone/iPad:</strong> Long press the image → Save to Photos</p>
+                                    <p><strong>Android:</strong> Long press the image → Save image</p>
+                                    <p><strong>Alternative:</strong> Take a screenshot of this page</p>
+                                </div>
+                            </body>
+                        </html>
+                    `);
+                    newWindow.document.close();
+                    
+                    // Clean up after a delay
+                    setTimeout(() => {
+                        URL.revokeObjectURL(url);
+                    }, 10000);
+                    
+                } else {
+                    // For desktop, use direct download
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    
+                    // Generate filename with timestamp
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                    link.download = `receipt-${timestamp}.png`;
+                    
+                    // Trigger download
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Clean up
+                    URL.revokeObjectURL(url);
+                }
+                
+                this.hideLoading();
+                
+                // Show success message
+                if (isMobile) {
+                    alert('Receipt image opened in new tab. Long press the image to save it to your device!');
+                } else {
+                    alert('Receipt saved as photo successfully!');
+                }
+                
+            }, 'image/png', 0.95);
+
+        } catch (error) {
+            this.hideLoading();
+            console.error('Error saving receipt as photo:', error);
+            alert('Error saving receipt as photo. Please try again.');
+        }
+    }
+
+    async loadHtml2Canvas() {
+        return new Promise((resolve, reject) => {
+            // Check if html2canvas is already loaded
+            if (typeof html2canvas !== 'undefined') {
+                resolve();
+                return;
+            }
+
+            // Create script element to load html2canvas
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            script.onload = () => {
+                console.log('html2canvas library loaded successfully');
+                resolve();
+            };
+            script.onerror = () => {
+                console.error('Failed to load html2canvas library');
+                reject(new Error('Failed to load html2canvas library'));
+            };
+            
+            document.head.appendChild(script);
+        });
     }
 
     editOrder(orderId) {

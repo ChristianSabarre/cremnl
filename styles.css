@@ -326,6 +326,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .modal-header h3 {
@@ -692,7 +694,8 @@ form {
 
 /* Receipt Styles */
 .receipt-content {
-    max-width: 400px;
+    max-width: 500px;
+    min-width: 450px;
 }
 
 .receipt {
@@ -752,6 +755,68 @@ form {
     color: #718096;
     border-top: 2px dashed #e2e8f0;
     padding-top: 15px;
+}
+
+.receipt-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.receipt-actions .btn {
+    padding: 8px 12px;
+    font-size: 14px;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    display: inline-block;
+    visibility: visible;
+    opacity: 1;
+    z-index: 10;
+}
+
+.receipt-actions .btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Specific styling for save receipt photo button */
+#saveReceiptPhoto {
+    background: rgba(255, 255, 255, 0.3) !important;
+    border: 2px solid rgba(255, 255, 255, 0.5) !important;
+    color: white !important;
+    font-weight: bold !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: 120px !important;
+    height: 40px !important;
+    margin: 5px !important;
+}
+
+/* Responsive adjustments for receipt modal */
+@media (max-width: 768px) {
+    .receipt-content {
+        max-width: 95vw;
+        min-width: 320px;
+    }
+    
+    .modal-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .receipt-actions {
+        justify-content: center;
+    }
+    
+    .receipt-actions .btn {
+        flex: 1;
+        min-width: 120px;
+    }
 }
 
 /* Customer and Item Lists */
