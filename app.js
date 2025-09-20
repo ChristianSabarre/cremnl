@@ -1394,10 +1394,14 @@ class ReceiptSystem {
                 return;
             }
 
-            // Detect mobile device
+            // Detect mobile device (improved detection for iOS)
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             
-            if (isMobile) {
+            // Use mobile approach for iOS, Android, or touch devices
+            if (isMobile || isIOS || isTouchDevice) {
+                console.log('Mobile device detected, using screenshot approach');
                 // For mobile, use a simpler approach - open receipt in new tab for screenshot
                 this.openReceiptForMobileScreenshot();
                 return;
@@ -1409,18 +1413,41 @@ class ReceiptSystem {
             // Use html2canvas library to convert receipt to image
             if (typeof html2canvas === 'undefined') {
                 // Load html2canvas library if not already loaded
-                await this.loadHtml2Canvas();
+                try {
+                    await Promise.race([
+                        this.loadHtml2Canvas(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+                    ]);
+                } catch (error) {
+                    console.error('Failed to load html2canvas:', error);
+                    this.hideLoading();
+                    alert('Failed to load image generation library. Opening receipt in new tab for screenshot instead.');
+                    this.openReceiptForMobileScreenshot();
+                    return;
+                }
             }
 
-            // Create canvas from receipt content
-            const canvas = await html2canvas(receiptContent, {
-                backgroundColor: '#ffffff',
-                scale: 2, // Higher resolution
-                useCORS: true,
-                allowTaint: true,
-                width: receiptContent.offsetWidth,
-                height: receiptContent.offsetHeight
-            });
+            // Create canvas from receipt content with timeout
+            let canvas;
+            try {
+                canvas = await Promise.race([
+                    html2canvas(receiptContent, {
+                        backgroundColor: '#ffffff',
+                        scale: 2, // Higher resolution
+                        useCORS: true,
+                        allowTaint: true,
+                        width: receiptContent.offsetWidth,
+                        height: receiptContent.offsetHeight
+                    }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Canvas generation timeout')), 10000))
+                ]);
+            } catch (error) {
+                console.error('Canvas generation failed:', error);
+                this.hideLoading();
+                alert('Image generation failed. Opening receipt in new tab for screenshot instead.');
+                this.openReceiptForMobileScreenshot();
+                return;
+            }
 
             // Convert canvas to blob
             canvas.toBlob((blob) => {
@@ -1615,10 +1642,12 @@ class ReceiptSystem {
                 </div>
                 <div class="instructions">
                     <h3>📱 How to Save This Receipt:</h3>
-                    <p><strong>iPhone/iPad:</strong> Take a screenshot (Power + Volume Up)</p>
-                    <p><strong>Android:</strong> Take a screenshot (Power + Volume Down)</p>
+                    <p><strong>iPhone:</strong> Press Side Button + Volume Up</p>
+                    <p><strong>iPad:</strong> Press Top Button + Volume Up</p>
+                    <p><strong>Android:</strong> Press Power + Volume Down</p>
                     <p><strong>Alternative:</strong> Use your device's screenshot feature</p>
                     <p><em>The receipt is optimized for mobile screenshots!</em></p>
+                    <p><strong>💡 Tip:</strong> The screenshot will be saved to your Photos app automatically!</p>
                 </div>
             </body>
             </html>
@@ -1630,7 +1659,7 @@ class ReceiptSystem {
         newWindow.document.close();
         
         // Show instruction
-        alert('📱 Receipt opened in new tab! Take a screenshot to save it to your device.');
+        alert('📱 Receipt opened in new tab! Take a screenshot to save it to your device.\n\nFor iOS: Press Side Button + Volume Up\nFor Android: Press Power + Volume Down');
     }
 
     getCurrentReceiptOrderId() {
