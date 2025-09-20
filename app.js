@@ -15,7 +15,6 @@ class ReceiptSystem {
         this.isAuthenticated = false;
         this.eventListenersAttached = false;
         this.isCreatingCustomer = false;
-        this.currentReceiptOrderId = null;
         
         console.log('🚀 ReceiptSystem constructor called');
         console.log('🔧 useAppScript:', this.useAppScript);
@@ -1300,9 +1299,6 @@ class ReceiptSystem {
             return;
         }
 
-        // Store the current order ID for mobile screenshot functionality
-        this.currentReceiptOrderId = orderId;
-
         const receiptContent = document.getElementById('receiptContent');
         receiptContent.innerHTML = `
             <div class="receipt-header">
@@ -1394,60 +1390,24 @@ class ReceiptSystem {
                 return;
             }
 
-            // Detect mobile device (improved detection for iOS)
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-            
-            // Use mobile approach for iOS, Android, or touch devices
-            if (isMobile || isIOS || isTouchDevice) {
-                console.log('Mobile device detected, using screenshot approach');
-                // For mobile, use a simpler approach - open receipt in new tab for screenshot
-                this.openReceiptForMobileScreenshot();
-                return;
-            }
-
-            // Show loading indicator for desktop
+            // Show loading indicator
             this.showLoading('Generating receipt image...');
 
             // Use html2canvas library to convert receipt to image
             if (typeof html2canvas === 'undefined') {
                 // Load html2canvas library if not already loaded
-                try {
-                    await Promise.race([
-                        this.loadHtml2Canvas(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-                    ]);
-                } catch (error) {
-                    console.error('Failed to load html2canvas:', error);
-                    this.hideLoading();
-                    alert('Failed to load image generation library. Opening receipt in new tab for screenshot instead.');
-                    this.openReceiptForMobileScreenshot();
-                    return;
-                }
+                await this.loadHtml2Canvas();
             }
 
-            // Create canvas from receipt content with timeout
-            let canvas;
-            try {
-                canvas = await Promise.race([
-                    html2canvas(receiptContent, {
-                        backgroundColor: '#ffffff',
-                        scale: 2, // Higher resolution
-                        useCORS: true,
-                        allowTaint: true,
-                        width: receiptContent.offsetWidth,
-                        height: receiptContent.offsetHeight
-                    }),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Canvas generation timeout')), 10000))
-                ]);
-            } catch (error) {
-                console.error('Canvas generation failed:', error);
-                this.hideLoading();
-                alert('Image generation failed. Opening receipt in new tab for screenshot instead.');
-                this.openReceiptForMobileScreenshot();
-                return;
-            }
+            // Create canvas from receipt content
+            const canvas = await html2canvas(receiptContent, {
+                backgroundColor: '#ffffff',
+                scale: 2, // Higher resolution
+                useCORS: true,
+                allowTaint: true,
+                width: receiptContent.offsetWidth,
+                height: receiptContent.offsetHeight
+            });
 
             // Convert canvas to blob
             canvas.toBlob((blob) => {
@@ -1457,26 +1417,70 @@ class ReceiptSystem {
                     return;
                 }
 
-                // For desktop, use direct download
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
+                // Check if device supports download attribute
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                 
-                // Generate filename with timestamp
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                link.download = `receipt-${timestamp}.png`;
+                if (isMobile) {
+                    // For mobile devices, open image in new tab for saving
+                    const url = URL.createObjectURL(blob);
+                    const newWindow = window.open();
+                    newWindow.document.write(`
+                        <html>
+                            <head>
+                                <title>Receipt - Save Image</title>
+                                <style>
+                                    body { margin: 0; padding: 20px; text-align: center; background: #f5f5f5; }
+                                    img { max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; }
+                                    .instructions { margin-top: 20px; padding: 15px; background: white; border-radius: 8px; }
+                                    .instructions h3 { color: #5D4037; margin-bottom: 10px; }
+                                    .instructions p { color: #666; margin: 5px 0; }
+                                </style>
+                            </head>
+                            <body>
+                                <img src="${url}" alt="Receipt">
+                                <div class="instructions">
+                                    <h3>📱 How to Save on Mobile:</h3>
+                                    <p><strong>iPhone/iPad:</strong> Long press the image → Save to Photos</p>
+                                    <p><strong>Android:</strong> Long press the image → Save image</p>
+                                    <p><strong>Alternative:</strong> Take a screenshot of this page</p>
+                                </div>
+                            </body>
+                        </html>
+                    `);
+                    newWindow.document.close();
+                    
+                    // Clean up after a delay
+                    setTimeout(() => {
+                        URL.revokeObjectURL(url);
+                    }, 10000);
+                    
+                } else {
+                    // For desktop, use direct download
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    
+                    // Generate filename with timestamp
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                    link.download = `receipt-${timestamp}.png`;
+                    
+                    // Trigger download
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Clean up
+                    URL.revokeObjectURL(url);
+                }
                 
-                // Trigger download
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                // Clean up
-                URL.revokeObjectURL(url);
                 this.hideLoading();
                 
                 // Show success message
-                alert('Receipt saved as photo successfully!');
+                if (isMobile) {
+                    alert('Receipt image opened in new tab. Long press the image to save it to your device!');
+                } else {
+                    alert('Receipt saved as photo successfully!');
+                }
                 
             }, 'image/png', 0.95);
 
@@ -1485,186 +1489,6 @@ class ReceiptSystem {
             console.error('Error saving receipt as photo:', error);
             alert('Error saving receipt as photo. Please try again.');
         }
-    }
-
-    openReceiptForMobileScreenshot() {
-        // Get the current receipt data
-        const orderId = this.currentOrderId || this.getCurrentReceiptOrderId();
-        if (!orderId) {
-            alert('No receipt data available.');
-            return;
-        }
-
-        const order = this.orders.find(o => o.id === orderId);
-        const payment = this.payments.find(p => p.order_id === orderId);
-        const customer = this.customers.find(c => c.id === order.customer_id);
-
-        if (!order || !payment) {
-            alert('Receipt not found.');
-            return;
-        }
-
-        // Create a mobile-optimized receipt page
-        const mobileReceiptHTML = `
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>CRE.MNL Receipt</title>
-                <style>
-                    * { margin: 0; padding: 0; box-sizing: border-box; }
-                    body { 
-                        font-family: 'Courier New', monospace; 
-                        background: white; 
-                        padding: 20px; 
-                        line-height: 1.4;
-                        color: #333;
-                    }
-                    .receipt-container {
-                        max-width: 400px;
-                        margin: 0 auto;
-                        background: white;
-                        border: 2px solid #8B4513;
-                        border-radius: 10px;
-                        overflow: hidden;
-                    }
-                    .receipt-header {
-                        background: #8B4513;
-                        color: white;
-                        text-align: center;
-                        padding: 20px;
-                    }
-                    .receipt-header h2 {
-                        font-size: 1.8rem;
-                        margin-bottom: 5px;
-                    }
-                    .receipt-header p {
-                        font-size: 0.9rem;
-                        opacity: 0.9;
-                    }
-                    .receipt-info {
-                        padding: 20px;
-                        background: #f8f8f8;
-                        border-bottom: 1px solid #ddd;
-                    }
-                    .receipt-info p {
-                        margin: 5px 0;
-                        font-size: 0.9rem;
-                    }
-                    .receipt-items {
-                        padding: 20px;
-                    }
-                    .receipt-item {
-                        display: flex;
-                        justify-content: space-between;
-                        margin-bottom: 8px;
-                        padding: 5px 0;
-                        border-bottom: 1px dotted #ccc;
-                    }
-                    .receipt-totals {
-                        padding: 20px;
-                        background: #f8f8f8;
-                        border-top: 2px solid #8B4513;
-                    }
-                    .receipt-total {
-                        display: flex;
-                        justify-content: space-between;
-                        margin-bottom: 8px;
-                        font-weight: bold;
-                        font-size: 1.1rem;
-                    }
-                    .receipt-footer {
-                        padding: 20px;
-                        text-align: center;
-                        background: #8B4513;
-                        color: white;
-                    }
-                    .instructions {
-                        margin-top: 20px;
-                        padding: 15px;
-                        background: #e8f4f8;
-                        border-radius: 8px;
-                        border-left: 4px solid #8B4513;
-                    }
-                    .instructions h3 {
-                        color: #8B4513;
-                        margin-bottom: 10px;
-                    }
-                    .instructions p {
-                        margin: 5px 0;
-                        font-size: 0.9rem;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="receipt-container">
-                    <div class="receipt-header">
-                        <h2>CRE.MNL</h2>
-                        <p>Pasig City</p>
-                        <p>Phone: +639277747832</p>
-                    </div>
-                    <div class="receipt-info">
-                        <p><strong>Receipt ID:</strong> ${payment.receipt_id}</p>
-                        <p><strong>Date & Time:</strong> ${this.formatDateTime(payment.paid_at)}</p>
-                        <p><strong>Customer:</strong> ${customer ? customer.name : 'Unknown'}</p>
-                        <p><strong>Ref ID:</strong> ${payment.refid}</p>
-                    </div>
-                    <div class="receipt-items">
-                        ${order.items.map(item => {
-                            const itemData = this.items.find(i => i.id === item.item_id);
-                            return `
-                                <div class="receipt-item">
-                                    <span>${itemData ? itemData.name : 'Unknown'} (${itemData ? itemData.size : 'N/A'}) x${item.quantity}</span>
-                                    <span>₱${item.sales.toFixed(2)}</span>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                    <div class="receipt-totals">
-                        <div class="receipt-total">
-                            <span>Amount Due:</span>
-                            <span>₱${payment.amount_due.toFixed(2)}</span>
-                        </div>
-                        <div class="receipt-total">
-                            <span>Total Paid:</span>
-                            <span>₱${payment.amount_paid.toFixed(2)}</span>
-                        </div>
-                        <div class="receipt-total">
-                            <span>Balance:</span>
-                            <span>₱${payment.balance.toFixed(2)}</span>
-                        </div>
-                    </div>
-                    <div class="receipt-footer">
-                        <p>Thank you for your business!</p>
-                        <p>Payment Method: ${payment.method.toUpperCase()}</p>
-                    </div>
-                </div>
-                <div class="instructions">
-                    <h3>📱 How to Save This Receipt:</h3>
-                    <p><strong>iPhone:</strong> Press Side Button + Volume Up</p>
-                    <p><strong>iPad:</strong> Press Top Button + Volume Up</p>
-                    <p><strong>Android:</strong> Press Power + Volume Down</p>
-                    <p><strong>Alternative:</strong> Use your device's screenshot feature</p>
-                    <p><em>The receipt is optimized for mobile screenshots!</em></p>
-                    <p><strong>💡 Tip:</strong> The screenshot will be saved to your Photos app automatically!</p>
-                </div>
-            </body>
-            </html>
-        `;
-
-        // Open in new tab
-        const newWindow = window.open('', '_blank');
-        newWindow.document.write(mobileReceiptHTML);
-        newWindow.document.close();
-        
-        // Show instruction
-        alert('📱 Receipt opened in new tab! Take a screenshot to save it to your device.\n\nFor iOS: Press Side Button + Volume Up\nFor Android: Press Power + Volume Down');
-    }
-
-    getCurrentReceiptOrderId() {
-        // Return the stored current receipt order ID
-        return this.currentReceiptOrderId || null;
     }
 
     async loadHtml2Canvas() {
