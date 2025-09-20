@@ -1,0 +1,372 @@
+================================================================================
+                    CRE.MNL ADMIN DASHBOARD - MINI POS SYSTEM
+                          Complete Feature Documentation
+================================================================================
+
+OVERVIEW:
+---------
+A comprehensive Point of Sale (POS) system built with HTML, CSS, JavaScript, and 
+Google Apps Script integration. Features real-time data synchronization with 
+Google Sheets for complete business management.
+
+================================================================================
+                                AUTHENTICATION
+================================================================================
+
+🔐 LOGIN SYSTEM
+- Simple authentication with hardcoded credentials
+- Username: admin
+- Password: cremnl2025sd
+- Session management using browser sessionStorage
+- Automatic logout functionality
+- Secure access control to all system features
+
+================================================================================
+                                CUSTOMER MANAGEMENT
+================================================================================
+
+👥 CUSTOMER OPERATIONS
+✓ Add New Customers
+  - Name, Email, Phone number
+  - Automatic ID generation
+  - Real-time Google Sheets sync
+  
+✓ Edit Existing Customers
+  - Modify all customer details
+  - Updates reflected in Google Sheets
+  - Immediate UI refresh
+  
+✓ Delete Customers
+  - Remove customers from system
+  - Automatic cleanup from Google Sheets
+  - Validation to prevent orphaned orders
+  
+✓ Customer Analytics
+  - Total vs Completed orders per customer
+  - Customer spending analysis
+  - Returning customer identification
+  - VIP customer badges
+  - Customer retention metrics
+
+🎯 CUSTOMER FEATURES
+- Auto-refresh from Google Sheets when switching to Customers tab
+- Real-time customer statistics
+- Order history tracking per customer
+- Customer performance metrics
+
+================================================================================
+                                INVENTORY MANAGEMENT
+================================================================================
+
+📦 ITEM OPERATIONS
+✓ Add New Items
+  - Item name, size, cost to make, selling price
+  - Automatic profit calculation
+  - Real-time Google Sheets sync
+  
+✓ Edit Existing Items
+  - Modify item details and pricing
+  - Updates reflected in Google Sheets
+  - Immediate availability in order creation
+  
+✓ Delete Items
+  - Remove items from inventory
+  - Automatic cleanup from Google Sheets
+  - Validation to prevent order conflicts
+  
+✓ Item Analytics
+  - Cost vs profit analysis
+  - Item performance tracking
+  - Inventory valuation
+
+🎯 ITEM FEATURES
+- Dynamic pricing updates
+- Profit margin calculations
+- Real-time inventory status
+- Item performance metrics
+
+================================================================================
+                                ORDER MANAGEMENT
+================================================================================
+
+🛒 ORDER OPERATIONS
+✓ Create New Orders
+  - Customer selection with auto-refresh dropdown
+  - Multiple item selection per order
+  - Quantity specification
+  - Automatic total calculations
+  - Real-time Google Sheets sync
+  
+✓ Edit Existing Orders
+  - Modify customer and items
+  - Update quantities and selections
+  - Changes reflected in Google Sheets
+  - Preserve order history
+  
+✓ Delete Orders
+  - Remove orders from system
+  - Automatic payment cleanup
+  - Google Sheets synchronization
+  
+✓ Order Status Management
+  - Pending orders (no payment)
+  - Completed orders (with payment)
+  - Payment-based status determination
+  - Automatic status updates
+
+🎯 ORDER FEATURES
+- Auto-refresh from Google Sheets when switching to Orders tab
+- Real-time order status updates
+- Comprehensive order filtering:
+  * Filter by status (All, Pending, Completed)
+  * Filter by date (Today, Yesterday, This Week, Last Week, This Month, Last Month, This Year, Custom Range)
+  * Filter by customer
+  * Filter by item
+- Order completion tracking
+- Date completed visibility for finished orders
+
+================================================================================
+                                PAYMENT PROCESSING
+================================================================================
+
+💳 PAYMENT OPERATIONS
+✓ Process Payments
+  - Multiple payment methods (Cash, E-Cash)
+  - Amount due and amount paid tracking
+  - Balance calculation
+  - Receipt generation
+  - Automatic order completion
+  
+✓ Payment Methods
+  - Cash payments
+  - Electronic cash (E-Cash)
+  - Payment method tracking
+  - Transaction history
+  
+✓ Receipt Generation
+  - Professional receipt format
+  - Shop branding (CRE.MNL, Pasig City)
+  - Contact information (+639277747832)
+  - Itemized breakdown
+  - Payment details
+  - Receipt ID and Ref ID
+
+🎯 PAYMENT FEATURES
+- Real-time balance calculation
+- Payment validation
+- Automatic order status updates
+- Receipt printing capability
+- Payment history tracking
+- Integration with order completion
+
+================================================================================
+                                ANALYTICS DASHBOARD
+================================================================================
+
+📊 BUSINESS ANALYTICS
+✓ Key Performance Indicators (KPIs)
+  - Total Revenue
+  - Total Profit
+  - Total Orders
+  - Profit Margin Percentage
+  
+✓ Visual Analytics
+  - Daily Profit Trend Chart (Line Chart)
+  - Top Selling Items Chart (Doughnut Chart)
+  - Top Customers by Revenue (Bar Chart)
+  - Customer Order Frequency (Bar Chart)
+  
+✓ Date Range Filtering
+  - Today, Yesterday, This Week, Last Week
+  - This Month, Last Month, This Year
+  - Custom date range selection
+  
+✓ Customer Analytics
+  - Total customers count
+  - Returning customers identification
+  - Customer retention rate
+  - Average order value per customer
+  - Customer spending analysis
+
+🎯 ANALYTICS FEATURES
+- Real-time data updates
+- Modern brown/beige chart styling
+- Responsive chart containers
+- Automatic data synchronization
+- Comprehensive business insights
+
+================================================================================
+                                GOOGLE SHEETS INTEGRATION
+================================================================================
+
+📋 BACKEND INTEGRATION
+✓ Google Apps Script Backend
+  - Web app deployment
+  - RESTful API endpoints
+  - CORS handling
+  - Error handling and logging
+  
+✓ Data Synchronization
+  - Real-time data sync
+  - Automatic data fetching on tab switch
+  - Bidirectional data updates
+  - Conflict resolution
+  
+✓ Sheet Management
+  - Customers sheet
+  - Items sheet
+  - Orders sheet
+  - Payments sheet
+  - Automatic sheet creation
+  - Header management
+
+🎯 INTEGRATION FEATURES
+- Seamless data persistence
+- Offline capability with local storage fallback
+- Real-time updates across devices
+- Data integrity validation
+- Automatic error recovery
+
+================================================================================
+                                USER INTERFACE
+================================================================================
+
+🎨 DESIGN FEATURES
+✓ Modern Brown/Beige Theme
+  - Professional color scheme
+  - Consistent branding
+  - CRE.MNL Admin Dashboard branding
+  
+✓ Responsive Design
+  - Mobile-friendly layout
+  - Adaptive chart sizing
+  - Touch-friendly controls
+  
+✓ User Experience
+  - Intuitive navigation
+  - Loading animations
+  - Success/error feedback
+  - Modal-based workflows
+
+🎯 UI FEATURES
+- Tab-based navigation
+- Modal dialogs for data entry
+- Real-time form validation
+- Professional styling
+- Accessibility considerations
+
+================================================================================
+                                TECHNICAL FEATURES
+================================================================================
+
+⚙️ SYSTEM CAPABILITIES
+✓ Real-time Updates
+  - Live data synchronization
+  - Automatic refresh on tab switches
+  - Instant UI updates
+  
+✓ Data Validation
+  - Form input validation
+  - Business rule enforcement
+  - Error handling and recovery
+  
+✓ Performance Optimization
+  - Efficient data loading
+  - Optimized chart rendering
+  - Minimal API calls
+  
+✓ Security Features
+  - User authentication
+  - Session management
+  - Data validation
+
+🎯 TECHNICAL FEATURES
+- Modern JavaScript (ES6+)
+- Chart.js for visualizations
+- Google Apps Script integration
+- Local storage fallback
+- CORS handling
+- Error logging and debugging
+
+================================================================================
+                                WORKFLOW EXAMPLES
+================================================================================
+
+🔄 TYPICAL BUSINESS WORKFLOWS
+
+1. CUSTOMER ONBOARDING
+   Login → Customers Tab → Add Customer → Auto-refresh → Customer Added
+
+2. ORDER PROCESSING
+   Orders Tab → Create Order → Select Customer → Add Items → Calculate Total → 
+   Save Order → Process Payment → Generate Receipt → Order Completed
+
+3. INVENTORY MANAGEMENT
+   Items Tab → Add/Edit Items → Update Pricing → Auto-sync → Available in Orders
+
+4. BUSINESS ANALYTICS
+   Analytics Tab → View KPIs → Check Charts → Filter by Date → 
+   Analyze Performance → Make Business Decisions
+
+5. DAILY OPERATIONS
+   Login → Check Orders → Process Payments → Update Inventory → 
+   View Analytics → Logout
+
+================================================================================
+                                CURRENCY & LOCALIZATION
+================================================================================
+
+💰 PHILIPPINE PESO INTEGRATION
+- All monetary values in Philippine Peso (₱)
+- Proper currency formatting
+- Local business practices
+- Philippine phone number format
+
+🎯 LOCALIZATION FEATURES
+- Peso symbol throughout system
+- Philippine address format
+- Local business branding
+- Regional contact information
+
+================================================================================
+                                SYSTEM REQUIREMENTS
+================================================================================
+
+📋 TECHNICAL REQUIREMENTS
+- Modern web browser (Chrome, Firefox, Safari, Edge)
+- Internet connection for Google Sheets sync
+- JavaScript enabled
+- Local storage support
+
+🚀 DEPLOYMENT
+- Host on any web server
+- Google Apps Script deployment required
+- CORS configuration for cross-origin requests
+- SSL recommended for production use
+
+================================================================================
+                                SUPPORT & MAINTENANCE
+================================================================================
+
+🔧 SYSTEM MAINTENANCE
+- Regular Google Sheets backup
+- Monitor Apps Script execution logs
+- Update customer and item data as needed
+- Regular system performance checks
+
+📞 SUPPORT FEATURES
+- Comprehensive error logging
+- Debug mode capabilities
+- User-friendly error messages
+- Automatic data recovery
+
+================================================================================
+
+This CRE.MNL Admin Dashboard provides a complete Point of Sale solution with
+real-time Google Sheets integration, comprehensive analytics, and professional
+business management capabilities.
+
+For technical support or feature requests, refer to the system documentation
+and Google Apps Script execution logs.
+
+================================================================================
