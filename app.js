@@ -13,6 +13,8 @@ class ReceiptSystem {
         this.useAppScript = window.USE_APPSCRIPT || false;
         this.appScriptClient = null;
         this.isAuthenticated = false;
+        this.eventListenersAttached = false;
+        this.isCreatingCustomer = false;
         
         console.log('🚀 ReceiptSystem constructor called');
         console.log('🔧 useAppScript:', this.useAppScript);
@@ -406,6 +408,14 @@ class ReceiptSystem {
     }
 
     setupEventListeners() {
+        // Prevent duplicate event listeners
+        if (this.eventListenersAttached) {
+            console.log('⚠️ Event listeners already attached, skipping...');
+            return;
+        }
+        
+        console.log('🔧 Setting up event listeners...');
+        
         // Navigation tabs
         document.querySelectorAll('.nav-btn').forEach(btn => {
             if (btn) {
@@ -661,6 +671,10 @@ class ReceiptSystem {
                 }
             }
         });
+        
+        // Mark that event listeners have been attached
+        this.eventListenersAttached = true;
+        console.log('✅ Event listeners attached successfully');
     }
 
     switchTab(tabName) {
@@ -698,9 +712,45 @@ class ReceiptSystem {
             this.updateAnalytics();
         }
         
-        // Update customer analytics when switching to customers tab
+        // Update customer analytics and refresh data when switching to customers tab
         if (tabName === 'customers') {
+            this.refreshDataFromBackend(tabName);
             this.updateCustomerAnalytics(this.orders);
+        }
+        
+        // Refresh data from Google Sheets when switching to orders tab
+        if (tabName === 'orders') {
+            this.refreshDataFromBackend(tabName);
+        }
+    }
+
+    async refreshDataFromBackend(tabName = 'orders') {
+        console.log(`🔄 Refreshing data from backend when switching to ${tabName} tab...`);
+        
+        try {
+            // Show a subtle loading indicator with appropriate message
+            const loadingMessage = tabName === 'customers' 
+                ? 'Refreshing customers from Google Sheets...' 
+                : 'Refreshing orders from Google Sheets...';
+            this.showLoading(loadingMessage);
+            
+            // Sync data from Google Sheets without showing the success alert
+            await this.syncDataFromGoogleSheets(false);
+            
+            // Re-render the appropriate content based on tab
+            if (tabName === 'customers') {
+                this.renderCustomers();
+                console.log('✅ Customers tab data refreshed successfully');
+            } else if (tabName === 'orders') {
+                this.renderOrders();
+                console.log('✅ Orders tab data refreshed successfully');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error refreshing data from backend:', error);
+            alert('Error refreshing data from Google Sheets. Please try again.');
+        } finally {
+            this.hideLoading();
         }
     }
 
@@ -1620,6 +1670,15 @@ class ReceiptSystem {
 
     async createCustomer() {
         console.log('🎯 createCustomer function called');
+        console.log('🔍 Stack trace:', new Error().stack);
+        
+        // Prevent multiple simultaneous executions
+        if (this.isCreatingCustomer) {
+            console.log('⚠️ Customer creation already in progress, skipping...');
+            return;
+        }
+        
+        this.isCreatingCustomer = true;
         
         const name = document.getElementById('customerName').value.trim();
         const email = document.getElementById('customerEmail').value.trim();
@@ -1630,6 +1689,7 @@ class ReceiptSystem {
 
         if (!name) {
             alert('Customer name is required.');
+            this.isCreatingCustomer = false;
             return;
         }
 
@@ -1694,6 +1754,14 @@ class ReceiptSystem {
             this.testAppsScriptConnection();
             
             this.renderCustomers();
+            
+            // If order modal is open, refresh the customer dropdown
+            const orderModal = document.getElementById('orderModal');
+            if (orderModal && orderModal.style.display === 'block') {
+                this.populateCustomerSelect();
+                console.log('🔄 Refreshed customer dropdown in order modal');
+            }
+            
             this.closeModal('customerModal');
             this.resetCustomerForm();
             this.hideLoading();
@@ -1705,6 +1773,9 @@ class ReceiptSystem {
             this.hideLoading();
             console.error('❌ Error saving customer:', error);
             alert('Error saving customer. Please try again.');
+        } finally {
+            // Reset the flag to allow future customer creation
+            this.isCreatingCustomer = false;
         }
     }
 
@@ -1878,6 +1949,14 @@ class ReceiptSystem {
             
             console.log('Items array after saving:', this.items);
             this.renderItems();
+            
+            // If order modal is open, refresh the item dropdowns
+            const orderModal = document.getElementById('orderModal');
+            if (orderModal && orderModal.style.display === 'block') {
+                this.populateItemSelects();
+                console.log('🔄 Refreshed item dropdowns in order modal');
+            }
+            
             this.closeModal('itemModal');
             this.resetItemForm();
             this.hideLoading();
